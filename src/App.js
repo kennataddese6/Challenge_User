@@ -27,8 +27,8 @@ const useIterator = (url) => {
     try {
       setisLoading(true);
       const responseData = await axios.get(url);
-      setUserList(responseData.data.results);
-      setCurrentUser(responseData.data.results[0]);
+      setUserList([...userList, ...responseData.data.results]);
+      setCurrentUser(...responseData.data.results);
       setisSuccess(true);
       setisLoading(false);
     } catch (error) {
@@ -36,14 +36,14 @@ const useIterator = (url) => {
       setisLoading(false);
     }
   };
+
   useEffect(() => {
     fetchUserData();
   }, []);
-
   const next = () => {
-    if (index === 49) {
+    if (userList.length - 1 === index) {
       fetchUserData();
-      setIndex(0);
+      setIndex(index + 1);
     } else {
       setIndex(index + 1);
       setCurrentUser(userList && userList[index + 1]);
@@ -51,8 +51,8 @@ const useIterator = (url) => {
   };
   const previous = () => {
     if (index === 0) {
-      setIndex(49);
-      setCurrentUser(userList && userList[49]);
+      setIndex(userList.length - 1);
+      setCurrentUser(userList && userList[userList.length - 1]);
     } else {
       setIndex(index - 1);
       setCurrentUser(userList && userList[index - 1]);
@@ -62,8 +62,7 @@ const useIterator = (url) => {
 };
 function App() {
   const [isLoading, isSuccess, isError, userList, current, next, previous] =
-    useIterator("https://randomuser.me/api/?results=50");
-
+    useIterator("https://randomuser.me/api/");
   return (
     <div>
       {isLoading && <Spinner />}
@@ -101,6 +100,7 @@ function App() {
         {isError && <div> Sorry, Something went wrong!</div>}
         {isSuccess &&
           userList &&
+          userList.length &&
           userList.map((user, index) => (
             <div key={index} className="user-items">
               <img
