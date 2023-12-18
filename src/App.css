@@ -8,6 +8,7 @@
 }
 .header-text {
   text-align: center;
+  padding-top: 15px;
 }
 .user-items {
   background-color: rgb(240, 228, 228);

@@ -16,78 +16,79 @@ const Spinner = () => {
   );
 };
 
-const useFetchWetherData = () => {
-  const [data, setData] = useState([]);
+const useIterator = (url) => {
+  const [userList, setUserList] = useState([]);
   const [isError, setisError] = useState(false);
   const [isSuccess, setisSuccess] = useState(false);
   const [isLoading, setisLoading] = useState(false);
-
+  const [current, setCurrentUser] = useState([]);
+  const [index, setIndex] = useState(0);
+  const fetchUserData = async () => {
+    try {
+      setisLoading(true);
+      const responseData = await axios.get(url);
+      setUserList(responseData.data.results);
+      setCurrentUser(responseData.data.results[0]);
+      setisSuccess(true);
+      setisLoading(false);
+    } catch (error) {
+      setisError(true);
+      setisLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchWhetherData = async () => {
-      try {
-        setisLoading(true);
-        const responseData = await axios.get(
-          "https://randomuser.me/api/?results=50"
-        );
-        console.log(responseData.data.results);
-        console.log(Array.isArray(responseData.data.results));
-        setData(responseData.data.results);
-        setisSuccess(true);
-        setisLoading(false);
-      } catch (error) {
-        setisError(true);
-        setisLoading(false);
-      }
-    };
-    fetchWhetherData();
+    fetchUserData();
   }, []);
-  return [isLoading, isSuccess, isError, data];
+
+  const next = () => {
+    if (index === 49) {
+      fetchUserData();
+      setIndex(0);
+    } else {
+      setIndex(index + 1);
+      setCurrentUser(userList && userList[index + 1]);
+    }
+  };
+  const previous = () => {
+    if (index === 0) {
+      setIndex(49);
+      setCurrentUser(userList && userList[49]);
+    } else {
+      setIndex(index - 1);
+      setCurrentUser(userList && userList[index - 1]);
+    }
+  };
+  return [isLoading, isSuccess, isError, userList, current, next, previous];
 };
 function App() {
-  const [isLoading, isSuccess, isError, data] = useFetchWetherData();
-  const [currentUser, setCurrentUser] = useState(0);
-  console.log("This is the  users", data && data);
-  console.log("This is the current user", currentUser);
-  const increment = () => {
-    if (currentUser === 49) {
-      setCurrentUser(0);
-    } else {
-      setCurrentUser(currentUser + 1);
-    }
-  };
-  const decrement = () => {
-    if (currentUser === 0) {
-      setCurrentUser(49);
-    } else {
-      setCurrentUser(currentUser - 1);
-    }
-  };
+  const [isLoading, isSuccess, isError, userList, current, next, previous] =
+    useIterator("https://randomuser.me/api/?results=50");
+
   return (
     <div>
-      {isLoading && Spinner()}
+      {isLoading && <Spinner />}
       <h1 className="header-text">Current User</h1>
       <div className="main">
         {isSuccess && (
           <div className="user-items">
             <img
               alt="Current User"
-              src={data && data[currentUser] && data[currentUser].picture.large}
+              src={current && current.picture.large}
               className="profile-pictures"
             />
             <h5 className="user-names">
-              {data && data[currentUser] && data[currentUser].name.first}{" "}
-              {data && data[currentUser] && data[currentUser].name.last}
+              {current && current.name.first} {current && current.name.last}
             </h5>
             <button
               onClick={() => {
-                decrement();
+                previous();
               }}
             >
               previous
             </button>
             <button
               onClick={() => {
-                increment();
+                next();
               }}
             >
               Next
@@ -99,8 +100,8 @@ function App() {
       <div className="main">
         {isError && <div> Sorry, Something went wrong!</div>}
         {isSuccess &&
-          data &&
-          data.map((user, index) => (
+          userList &&
+          userList.map((user, index) => (
             <div key={index} className="user-items">
               <img
                 alt="All  User"
